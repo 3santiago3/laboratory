@@ -1,0 +1,1 @@
+export default {"makeSomeChineseSeeSee":"make some chinese see see","helloWorld":"hello world"}

@@ -1,0 +1,16 @@
+{
+  "src\\views\\vueI18\\index.vue": [
+    {
+      "en": "make some chinese see see",
+      "url": "src\\views\\vueI18\\index.vue",
+      "id": "makeSomeChineseSeeSee",
+      "zh-cn": "搞个中文看一下"
+    },
+    {
+      "en": "hello world",
+      "url": "src\\views\\vueI18\\index.vue",
+      "id": "helloWorld",
+      "zh-cn": "你好世界"
+    }
+  ]
+}
