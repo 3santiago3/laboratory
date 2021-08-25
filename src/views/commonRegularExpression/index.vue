@@ -1,10 +1,16 @@
 <template>
   <div style="padding: 20px;">
+    <el-link
+      href="https://c.runoob.com/front-end/854"
+      type="primary"
+      icon="el-icon-link"
+      target="_blank"
+    >菜鸟工具正则表达式在线测试以及常用正则表达式</el-link>
+
+    <hr>
+
     <el-form ref="form" label-position="left">
-      <el-form-item
-        v-for="(v, k) in data"
-        :key="k"
-      >
+      <el-form-item v-for="(v, k) in data" :key="k">
         <template v-slot:label>
           <div>{{ v.name }}</div>
           <div style="font-weight: normal;">{{ v.reg }}</div>
@@ -20,7 +26,10 @@
             @input="validate(v)"
           /></el-col>
           <el-col :sm="4" class="center">
-            <el-button :disabled="v.disabled" @click="validate(v)">校验</el-button>
+            <el-button
+              :disabled="v.disabled"
+              @click="validate(v)"
+            >校验</el-button>
           </el-col>
           <el-col :sm="2" class="center">
             <i
@@ -76,7 +85,8 @@ export default {
           result: ''
         },
         password2: {
-          name: '密码2（密码长度是6-12位，由数字、小写字母和大写字母组成，但必须至少包括2种字符）',
+          name:
+            '密码2（密码长度是6-12位，由数字、小写字母和大写字母组成，但必须至少包括2种字符）',
           reg: /(((?=.*\d)((?=.*[a-z])|(?=.*[A-Z])))|(?=.*[a-z])(?=.*[A-Z]))^[a-zA-Z\d]{6,12}$/,
           value: '',
           result: ''
@@ -98,7 +108,8 @@ export default {
         },
         bankAccount: {
           name: '银行卡账号',
-          remark: '微信支付 https://pay.weixin.qq.com/wiki/doc/api/xiaowei.php?chapter=22_1 验证是 8 至 30 位的数字即可',
+          remark:
+            '微信支付 https://pay.weixin.qq.com/wiki/doc/api/xiaowei.php?chapter=22_1 验证是 8 至 30 位的数字即可',
           reg: /^[1-9]\d{7,29}$/,
           value: '',
           result: ''
