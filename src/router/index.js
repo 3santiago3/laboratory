@@ -182,6 +182,19 @@ export const constantRoutes = [
   },
 
   {
+    path: '/mock-demo',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'MockDemo',
+        component: () => import('@/views/mockDemo/index'),
+        meta: { title: '测试mock是否生效', icon: '' }
+      }
+    ]
+  },
+
+  {
     path: '/slot',
     component: Layout,
     children: [
