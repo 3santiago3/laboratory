@@ -73,7 +73,11 @@ module.exports = [
 
   // user logout
   {
+<<<<<<< HEAD
     url: '/vue-element-admin/user/logout',
+=======
+    url: '/mock/user/logout',
+>>>>>>> bd732106d4763f96cdbd764d183118ccd2d814da
     type: 'post',
     response: _ => {
       return {
