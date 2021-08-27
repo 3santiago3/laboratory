@@ -2,9 +2,21 @@ import request from '@/utils/request'
 
 export function login(data) {
   return request({
-    url: '/mock/user/login',
+    url: '/user/login',
     method: 'post',
     data
+  })
+}
+
+// 登录
+export function postOauthToken(params) {
+  return request({
+    url: '/zdp-auth/oauth/token',
+    method: 'post',
+    params,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
   })
 }
 

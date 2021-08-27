@@ -6,14 +6,14 @@ function resolve(dir) {
   return path.join(__dirname, dir)
 }
 
-const name = defaultSettings.title || 'vue Admin Template' // page title
+const name = defaultSettings.title || 'vue Element Admin' // page title
 
 // If your port is set to 80,
 // use administrator privileges to execute the command line.
 // For example, Mac: sudo npm run
-// You can change the port by the following methods:
-// port = 9529 npm run dev OR npm run dev --port = 9529
-const port = process.env.port || process.env.npm_config_port || 9529 // dev port
+// You can change the port by the following method:
+// port = 9527 npm run dev OR npm run dev --port = 9527
+const port = process.env.port || process.env.npm_config_port || 9527 // dev port
 
 // All configuration item explanations can be find in https://cli.vuejs.org/config/
 module.exports = {
@@ -36,16 +36,37 @@ module.exports = {
       warnings: false,
       errors: true
     },
-    // proxy: {
-    //   [process.env.VUE_APP_BASE_API]: {
-    //     target: `http://localhost:${port}/${process.env.VUE_APP_BASE_API}/mock`,
-    //     changeOrigin: true,
-    //     pathRewrite: {
-    //       ['^' + process.env.VUE_APP_BASE_API]: ''
-    //     }
-    //   }
-    // },
-    before: require('./mock/mock-server.js')
+    // detail: https://cli.vuejs.org/zh/config/#devserver-proxy
+    // more detail: https://github.com/chimurai/http-proxy-middleware
+    proxy: {
+      // 本地发出请求 http://127.0.0.1:9527/dev-api/user/login
+      // 匹配到 dev-api
+      // 会将 target http://127.0.0.1:9527 变成 http://127.0.0.1:9527/mock
+      // 然后将 path 路径 '/dev-api/' 改成 ''，然后 path 路径就从 /dev-api/user/login 变成了 /user/login
+      // 地址就成了 http://127.0.0.1:9527/mock/user/login，刚好匹配上了 mock-server.js 注册的路由
+      // 最终由 webpack-dev-server 的 express 服务发送请求至新地址
+      // [process.env.VUE_APP_BASE_API]: {
+      //   target: `http://127.0.0.1:${port}/mock`, // 联调工作之前的前端 Mock
+      //   changeOrigin: true,
+      //   pathRewrite: {
+      //     ['^' + process.env.VUE_APP_BASE_API]: ''
+      //   }
+      // }
+      // 本地发出请求 http://127.0.0.1:9527/dev-api/user/login
+      // 匹配到 dev-api
+      // 会将 target http://127.0.0.1:9527 变成 http://192.168.8.137:8082
+      // 然后将 path 路径 /dev-api/ 改成 /api/，然后 path 路径就从 /dev-api/user/login 变成了 /api/user/login
+      // 地址就成了 http://192.168.8.137:8082/api/user/login
+      // 最终由 webpack-dev-server 的 express 服务发送请求至新地址
+      [process.env.VUE_APP_BASE_API]: { // dev-api
+        target: process.env.VUE_APP_PROXY_URL, // 联调过程中（http://192.168.8.137:8082）
+        changeOrigin: true,
+        pathRewrite: {
+          ['^' + process.env.VUE_APP_BASE_API]: '/api' // 浏览器请求地址上可能没有看到 /api，但是后台接收到的请求地址是有的
+        }
+      }
+    },
+    after: require('./mock/mock-server.js')
   },
   configureWebpack: {
     // provide the app's title in webpack's name field, so that
@@ -56,13 +77,6 @@ module.exports = {
         '@': resolve('src')
       }
     }
-    // devtool: 'eval'
-    // devtool: 'source-map'
-    // devtool: 'inline-source-map'
-    // devtool: 'cheap-source-map'
-    // devtool: 'cheap-module-source-map'
-    // devtool: 'cheap-module-eval-source-map'
-    // devtool: 'hidden-source-map'
   },
   chainWebpack(config) {
     // it can improve the speed of the first screen, it is recommended to turn on preload

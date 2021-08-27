@@ -8,7 +8,6 @@ const mockDir = path.join(process.cwd(), 'mock')
 
 function registerRoutes(app) {
   let mockLastIndex
-  // mocks 大概长这样 [{ url: '', type: '', response: config => { return {} } }, ...]
   const { mocks } = require('./index.js')
   const mocksForServer = mocks.map(route => {
     return responseFake(route.url, route.type, route.response)
@@ -17,7 +16,6 @@ function registerRoutes(app) {
     app[mock.type](mock.url, mock.response)
     mockLastIndex = app._router.stack.length
   }
-  console.log(app._router)
   const mockRoutesLength = Object.keys(mocksForServer).length
   return {
     mockRoutesLength: mockRoutesLength,
@@ -36,61 +34,49 @@ function unregisterRoutes() {
 // for mock server
 const responseFake = (url, type, respond) => {
   return {
-    url: new RegExp(`${process.env.VUE_APP_BASE_API}${url}`),
+    // url: new RegExp(`${process.env.VUE_APP_BASE_API}${url}`),
+    url: new RegExp(`${url}`),
     type: type || 'get',
     response(req, res) {
       console.log('request invoke:' + req.path)
-      res.json(
-        Mock.mock(respond instanceof Function ? respond(req, res) : respond)
-      )
+      res.json(Mock.mock(respond instanceof Function ? respond(req, res) : respond))
     }
   }
 }
 
 module.exports = app => {
-  // app是express实例
   // parse app.body
   // https://expressjs.com/en/4x/api.html#req.body
   app.use(bodyParser.json())
-  app.use(
-    bodyParser.urlencoded({
-      extended: true
-    })
-  )
+  app.use(bodyParser.urlencoded({
+    extended: true
+  }))
 
-  // 注册路由到 webpack-dev-server 启动的服务上（app.get('xxx', (req, res) => {})）
   const mockRoutes = registerRoutes(app)
   var mockRoutesLength = mockRoutes.mockRoutesLength
   var mockStartIndex = mockRoutes.mockStartIndex
 
   // watch files, hot reload mock server
-  chokidar
-    .watch(mockDir, {
-      ignored: /mock-server/,
-      ignoreInitial: true
-    })
-    .on('all', (event, path) => {
-      if (event === 'change' || event === 'add') {
-        try {
-          // remove mock routes stack
-          app._router.stack.splice(mockStartIndex, mockRoutesLength)
+  chokidar.watch(mockDir, {
+    ignored: /mock-server/,
+    ignoreInitial: true
+  }).on('all', (event, path) => {
+    if (event === 'change' || event === 'add') {
+      try {
+        // remove mock routes stack
+        app._router.stack.splice(mockStartIndex, mockRoutesLength)
 
-          // clear routes cache
-          unregisterRoutes()
+        // clear routes cache
+        unregisterRoutes()
 
-          // 重新注册路由
-          const mockRoutes = registerRoutes(app)
-          mockRoutesLength = mockRoutes.mockRoutesLength
-          mockStartIndex = mockRoutes.mockStartIndex
+        const mockRoutes = registerRoutes(app)
+        mockRoutesLength = mockRoutes.mockRoutesLength
+        mockStartIndex = mockRoutes.mockStartIndex
 
-          console.log(
-            chalk.magentaBright(
-              `\n > Mock Server hot reload success! changed  ${path}`
-            )
-          )
-        } catch (error) {
-          console.log(chalk.redBright(error))
-        }
+        console.log(chalk.magentaBright(`\n > Mock Server hot reload success! changed  ${path}`))
+      } catch (error) {
+        console.log(chalk.redBright(error))
       }
-    })
+    }
+  })
 }

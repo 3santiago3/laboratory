@@ -1,3 +1,5 @@
+const Mock = require('mockjs')
+
 const tokens = {
   admin: {
     token: 'admin-token'
@@ -25,26 +27,24 @@ const users = {
 }
 
 module.exports = [
-  // user login
+  // 登录
   {
-    url: '/mock/user/login',
+    url: '/mock/zdp-auth/oauth/token',
     type: 'post',
     response: config => {
-      const { username } = config.body
-      const token = tokens[username]
-
-      // mock error
-      if (!token) {
-        return {
-          code: 60204,
-          message: 'Account and password are incorrect.'
-        }
-      }
-
-      return {
-        code: 20000,
-        data: token
-      }
+      return Mock.mock({
+        access_token: 'mock_access_token',
+        account: 'gem210',
+        avatar: '@image',
+        expires_in: 3600,
+        license: 'powered by zenithsun',
+        nick_name: '管理员',
+        refresh_token: 'mock_refresh_token',
+        role_id: '1123598816738675201',
+        role_name: 'administrator',
+        token_type: 'bearer',
+        user_id: '1123598821738675201'
+      })
     }
   },
 
@@ -73,7 +73,7 @@ module.exports = [
 
   // user logout
   {
-    url: '/mock/user/logout',
+    url: '/vue-element-admin/user/logout',
     type: 'post',
     response: _ => {
       return {

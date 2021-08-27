@@ -1,6 +1,6 @@
 <template>
   <div class="login-container">
-    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
+    <el-form ref="loginForm" :model="loginForm" class="login-form" auto-complete="on" label-position="left">
 
       <div class="title-container">
         <h3 class="title">Login Form</h3>
@@ -53,33 +53,13 @@
 </template>
 
 <script>
-import { validUsername } from '@/utils/validate'
-
 export default {
   name: 'Login',
   data() {
-    const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
-        callback(new Error('Please enter the correct user name'))
-      } else {
-        callback()
-      }
-    }
-    const validatePassword = (rule, value, callback) => {
-      if (value.length < 6) {
-        callback(new Error('The password can not be less than 6 digits'))
-      } else {
-        callback()
-      }
-    }
     return {
       loginForm: {
-        username: 'admin',
-        password: '111111'
-      },
-      loginRules: {
-        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePassword }]
+        username: '18819493006',
+        password: 'Abc123#456'
       },
       loading: false,
       passwordType: 'password',
@@ -109,7 +89,19 @@ export default {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
+          const publicKey = 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQChfHQriko6Ysg3TkIBfdTHtbZkeViGsZxSH/Fx6x2FbssKjfysqSYOJWe9XOGBj8RyZUn8EkxJx6YoqLPpVpZoDq3nbkMnLe10Kki9z8gT9PkiOimF1i3iXWBme9qVpuhTb8ovBHDw0nGBZK8NmLtV47bbrEC4a8Qy/PU0eDYAawIDAQAB'
+          // eslint-disable-next-line no-undef
+          const encrypt = new JSEncrypt()
+          encrypt.setPublicKey(publicKey)
+          const params = {
+            grant_type: 'password',
+            scope: 'all',
+            tenantId: '000000',
+            type: 'account',
+            username: this.loginForm.username,
+            password: encrypt.encrypt(this.loginForm.password)
+          }
+          this.$store.dispatch('user/login', params).then(() => {
             this.$router.push({ path: this.redirect || '/' })
             this.loading = false
           }).catch(() => {

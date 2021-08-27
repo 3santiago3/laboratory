@@ -1,6 +1,8 @@
 import Vue from 'vue'
 import moment from 'moment'
 import Storage from 'store2'
+import Cookies from 'js-cookie'
+import { Base64 } from 'js-base64'
 
 import 'normalize.css/normalize.css' // A modern alternative to CSS resets
 
@@ -15,6 +17,11 @@ import store from './store'
 import router from './router'
 
 const md5 = require('md5')
+
+const clientId = 'saber'
+const clientSecret = 'saber_secret'
+const encodeStr = `${clientId}:${clientSecret}`
+Cookies.set('client-auth', `Basic ${Base64.encode(encodeStr)}`)
 
 // window.addEventListener('error', event => {
 //   // console.log('************* error ****************')
