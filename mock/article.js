@@ -92,7 +92,7 @@ module.exports = [
   },
 
   {
-    url: '/vue-element-admin/article/create',
+    url: '/mock/article/create',
     type: 'post',
     response: _ => {
       return {

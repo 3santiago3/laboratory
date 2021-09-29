@@ -148,6 +148,11 @@ Vue.config.productionTip = false
 import VueFormMaker from '@/components/DynamicForm/index'
 Vue.use(VueFormMaker)
 
+import filesize from 'filesize'
+Vue.prototype.$filesize = filesize
+moment.locale('zh-cn')
+Vue.prototype.$moment = moment
+
 new Vue({
   el: '#app',
   router,

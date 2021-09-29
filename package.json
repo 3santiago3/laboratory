@@ -14,11 +14,13 @@
     "test:ci": "npm run lint && npm run test:unit"
   },
   "dependencies": {
+    "@flowjs/flow.js": "^2.14.1",
     "aikatsu-cli": "^1.1.0",
     "axios": "0.18.1",
     "core-js": "3.6.5",
     "element-ui": "^2.15.3",
     "ext-name": "^5.0.0",
+    "filesize": "^8.0.3",
     "js-base64": "^2.6.4",
     "js-cookie": "2.2.0",
     "magic-bytes.js": "^1.0.3",

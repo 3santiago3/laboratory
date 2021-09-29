@@ -30,8 +30,10 @@ const mutations = {
 const actions = {
   // user login
   login({ commit }, userInfo) {
+    debugger
     return new Promise((resolve, reject) => {
       postOauthToken(userInfo).then((response) => {
+        debugger
         if (response.error_code !== undefined || response.success === false) {
           reject(response.error_description)
         } else {

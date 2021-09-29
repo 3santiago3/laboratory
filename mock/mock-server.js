@@ -15,20 +15,36 @@ function registerRoutes(app) {
   })
   for (const mock of mocksForServer) {
     app[mock.type](mock.url, mock.response)
+    // app._router.stack 里面不完全是我们注册的路由，还包含其他的东西
+    // 我们注册的路由是被 push 到 app._router.stack 里面的
     mockLastIndex = app._router.stack.length
   }
-  console.log(app._router)
+  // 我们注册的路由的长度
   const mockRoutesLength = Object.keys(mocksForServer).length
   return {
     mockRoutesLength: mockRoutesLength,
-    mockStartIndex: mockLastIndex - mockRoutesLength
+    mockStartIndex: mockLastIndex - mockRoutesLength // app._router.stack 里面第一个我们注册的路由的索引
   }
 }
 
+// 使用 require 语法导入一个模块时，会将该模块缓存在 require.cache
+// 当我们修改了 mock 接口文件后，会再次执行 require()，但是因为有缓存了，会导致直接从缓存获取
+// 那么修改后的 mock 接口就没法生效了
+// 那就可以通过删除 require.cache 里的对应的文件缓存来解决
 function unregisterRoutes() {
-  Object.keys(require.cache).forEach(i => {
-    if (i.includes(mockDir)) {
-      delete require.cache[require.resolve(i)]
+  // require.cache 是一个 object
+  // 大概长这样
+  // {
+  //   'D:\Desktop\vue-admin-template-master\node_modules\esrecurse\package.json': {},
+  //   'D:\Desktop\vue-admin-template-master\mock\mock-server.js': {},
+  //   ...
+  // }
+  Object.keys(require.cache).forEach(key => {
+    if (key.includes(mockDir)) {
+      // require.resolve() 用来查询某个模块文件的完整绝对路径的文件名
+      // 比如 D:\Desktop\vue-admin-template-master\mock\index.js
+      // 保证路径和 require.cache 的 key 值一致
+      delete require.cache[require.resolve(key)]
     }
   })
 }
@@ -48,6 +64,8 @@ const responseFake = (url, type, respond) => {
   }
 }
 
+// devServer 的 after 配置
+// after：在服务内部的所有其他中间件（express 中间件）之后， 提供执行自定义中间件的功能
 module.exports = app => {
   // app是express实例
   // parse app.body
@@ -73,7 +91,7 @@ module.exports = app => {
     .on('all', (event, path) => {
       if (event === 'change' || event === 'add') {
         try {
-          // remove mock routes stack
+          // 把我们注册到的路由移除，原本存在于 app._router.stack 的不动
           app._router.stack.splice(mockStartIndex, mockRoutesLength)
 
           // clear routes cache

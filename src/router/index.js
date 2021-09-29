@@ -234,6 +234,19 @@ export const constantRoutes = [
   },
 
   {
+    path: '/big-file-upload',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'BigFileUpload',
+        component: () => import('@/views/bigFileUpload/index'),
+        meta: { title: '大文件上传', icon: '' }
+      }
+    ]
+  },
+
+  {
     path: '/dynamic-form-demo',
     component: Layout,
     children: [
