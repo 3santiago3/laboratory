@@ -93,6 +93,13 @@ module.exports = {
     // when there are many pages, it will cause too many meaningless requests
     config.plugins.delete('prefetch')
 
+    config.module
+      .rule('worker')
+      .test(/\.worker\.js$/)
+      .use('worker-loader')
+      .loader('worker-loader')
+      .end()
+
     // set svg-sprite-loader
     config.module
       .rule('svg')

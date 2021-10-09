@@ -152,6 +152,7 @@ import filesize from 'filesize'
 Vue.prototype.$filesize = filesize
 moment.locale('zh-cn')
 Vue.prototype.$moment = moment
+Vue.prototype.lodashGet = require('lodash.get')
 
 new Vue({
   el: '#app',

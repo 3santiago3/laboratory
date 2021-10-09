@@ -1037,8 +1037,10 @@
     * @returns {number} from 0 to 1
     */
    progress: function () {
+    // 原本是：如果是 error 会直接返回 1
      if (this.error) {
-       return 1;
+          return this._prevProgress // 自己加的
+          // return 1;
      }
      if (this.chunks.length === 1) {
        this._prevProgress = Math.max(this._prevProgress, this.chunks[0].progress());
@@ -1337,8 +1339,8 @@
        $.flowObj.uploadNextChunk();
      } else if (!$.fileObj.paused) {
        // Error might be caused by file pause method
-       // Chunks does not exist on the server side
-       $.tested = true;
+       // Chunks does not exist on the server side 服务器没有这个 chunk
+       $.tested = true; // 已经检查过了，但是服务器没有这个 chunk
        $.send();
      }
    };
