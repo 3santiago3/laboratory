@@ -20,6 +20,9 @@
         <li>
           关闭浏览器（tab标签页）要把上传中的取消
         </li>
+        <li>
+          合并中的时候，点暂停全部，能暂停吗
+        </li>
       </ul>
     </div>
 
@@ -58,52 +61,70 @@
             style="width: 100%"
             highlight-current-row
             :row-class-name="initRowClassName"
-            @row-dblclick="handleRowDbClick"
+            @row-click="handleRowClick"
           >
             <el-table-column prop="name" label="名称" />
             <el-table-column prop="uniqueIdentifier" label="唯一标识" />
             <el-table-column prop="formatSize" label="大小" width="100" />
-            <el-table-column label="信息" width="160">
-              <template slot-scope="{ row }">
-                <div>平均速率：{{ formatAverageSpeed(row.averageSpeed) }}</div>
-                <div>进度：{{ formatProgress(row.progress) }}</div>
-                <div>
-                  剩余时间：{{ formatTimeRemaining(row.timeRemaining) }}
-                </div>
-              </template>
-            </el-table-column>
             <el-table-column label="状态">
               <template slot-scope="{ row }">
                 <div>paused：{{ row.paused }}</div>
                 <div>上传状态：{{ row.status }}</div>
               </template>
             </el-table-column>
-            <el-table-column label="结果" width="70">
+            <el-table-column label="结果" width="140">
               <template slot-scope="{ row }">
-                <span v-show="row.paused && row.status !== 'calculating'">
-                  <i class="el-icon-video-pause" />
-                </span>
-                <span v-show="row.status === 'success'">
-                  <i class="el-icon-success" style="color: #67C23A;">成功</i>
-                </span>
-                <span v-show="row.status === 'secondTransmission'">
-                  <i class="el-icon-position" style="color: #67C23A;">秒传</i>
-                </span>
-                <span v-show="row.status === 'error'">
-                  <i class="el-icon-error" style="color: #F56C6C;" />
-                </span>
-                <span v-show="row.status === 'uploading'">
-                  <i class="el-icon-more" style="color: #409EFF;" />
-                </span>
-                <span v-show="row.status === 'pending' && !row.paused">
-                  <i class="el-icon-loading" style="color: #E6A23C;" />
-                </span>
+                <!-- MD5 计算中 -->
                 <span v-show="row.status === 'calculating'">
-                  <i class="el-icon-s-marketing" style="color: #409EFF;" />
-                  <span>{{ formatProgress(row.calcHashProgress) }}</span>
+                  <svg-icon icon-class="calculating" style="color: #409EFF; margin-right: 4px;" />
+                  <span>解析中 {{ formatProgress(row.calcHashProgress) }}</span>
                 </span>
+
+                <!-- 上传中 -->
+                <span v-show="row.status === 'uploading'">
+                  <span>平均速率：{{ formatAverageSpeed(row.averageSpeed) }}</span>
+                  <br>
+                  <span>进度：{{ formatProgress(row.progress) }}</span>
+                  <br>
+                  <span>
+                    剩余时间：{{ formatTimeRemaining(row.timeRemaining) }}
+                  </span>
+                </span>
+
+                <!-- 队列等待中 -->
+                <span v-show="row.status === 'pending' && !row.paused">
+                  <svg-icon icon-class="queue" style="color: #E6A23C; margin-right: 4px;" />
+                  <span>队列等待中</span>
+                </span>
+
+                <!-- 秒传 -->
+                <span v-show="row.status === 'secondTransmission'">
+                  <svg-icon icon-class="lightning" style="color: #67C23A; margin-right: 4px;" />
+                  <span>秒传</span>
+                </span>
+
+                <!-- 上传成功 -->
+                <span v-show="row.status === 'success'">
+                  <svg-icon icon-class="success" style="color: #67C23A; margin-right: 4px;" />
+                  <span>上传成功</span>
+                </span>
+
+                <!-- 上传失败 -->
+                <span v-show="row.status === 'error'">
+                  <svg-icon icon-class="error" style="color: #F56C6C; margin-right: 4px;" />
+                  <span>上传失败</span>
+                </span>
+
+                <!-- 合并中 -->
                 <span v-show="row.status === 'merging'">
+                  <svg-icon icon-class="merging" style="color: #409EFF; margin-right: 4px;" />
                   <span>合并中</span>
+                </span>
+
+                <!-- 暂停中 -->
+                <span v-show="row.paused && row.status !== 'calculating'">
+                  <svg-icon icon-class="pausing" style="color: #409EFF; margin-right: 4px;" />
+                  <span>暂停中</span>
                 </span>
               </template>
             </el-table-column>
@@ -133,6 +154,8 @@
                     row.status !== 'success' &&
                       row.status !== 'error' &&
                       row.status !== 'secondTransmission' &&
+                      row.status !== 'calculating' &&
+                      row.status !== 'merging' &&
                       !row.paused
                   "
                   type="text"
@@ -225,7 +248,6 @@ export default {
           file => file.uniqueIdentifier === fileObj.uniqueIdentifier
         )
         if (file) {
-          console.log('md5Hash: ' + file.md5Hash)
           // 把文件的 md5Hash 也传到后台
           return { md5Hash: file.md5Hash }
         }
@@ -243,6 +265,9 @@ export default {
     this.flow.assignBrowse(this.$refs.directoryFileButton.$el, true) // 选择文件夹
 
     this.flow.on('filesSubmitted', files => {
+      const noExistResult = []
+      let length = files.length // 还剩几个 fileObj 要上传（排除掉秒传的 fileObj 之后）
+
       // Flow 已经根据 relativePath 把相同文件过滤了
       files.forEach(async fileObj => {
         // averageSpeed // 文件平均上传速率
@@ -277,7 +302,7 @@ export default {
           calcHashProgress: 0
         }
         this.files.push(file)
-        console.log('计算' + fileObj.uniqueIdentifier + 'md5')
+        console.log('计算 ' + fileObj.name + ' md5')
         const hash = await this.calcMd5Hash(fileObj)
         file.md5Hash = hash
         console.log('md5 结算结果：' + hash)
@@ -286,14 +311,20 @@ export default {
         const isExist = await this.checkFileExist(hash, name)
         if (isExist) {
           console.log('秒传')
+          length--
           this.updateFileAndChunkInfo(fileObj, 'secondTransmission')
         } else {
-          console.log('开始上传文件 ' + uniqueIdentifier)
-          this.start(uniqueIdentifier)
+          // 要把所有的文件都计算完 md5 并且发送完请求检查是否已经上传过之后，再调用 flow.js 的上传
+          // 否则，调用了 flow.js 的上传之后，浏览器就没办法（超过 6 个请求）及时拿到文件是否已经上传过的接口的结果
+          noExistResult.push(fileObj)
+          if (noExistResult.length === length) {
+            noExistResult.forEach(obj => {
+              console.log('开始上传文件 ' + obj.name)
+              this.start(obj.uniqueIdentifier)
+            })
+          }
         }
       })
-
-      // this.flow.upload()
     })
 
     this.flow.on('uploadStart', () => {
@@ -416,7 +447,23 @@ export default {
         }
       })
     },
-    handleRowDbClick(row) {
+    handleRowClick(row, column, event) {
+      const target = this.lodashGet(event, 'target', {})
+      const tagName = this.lodashGet(target, 'tagName', '')
+      let className = ''
+
+      // 点击的是操作按钮的时候
+      if (tagName === 'SPAN') {
+        const parentELe = this.lodashGet(target, 'parentNode', {})
+        className = this.lodashGet(parentELe, 'className', '')
+      } else if (tagName === 'BUTTON') {
+        className = this.lodashGet(target, 'className', '')
+      }
+
+      if (className.indexOf('el-button--text') > -1) {
+        return
+      }
+
       const file = this.files.find(
         file => row.uniqueIdentifier === file.uniqueIdentifier
       )
@@ -427,7 +474,6 @@ export default {
 
     // 更新某个文件的进度、速率、剩余事件、状态等
     updateFileAndChunkInfo(fileObj, status) {
-      console.log('更新文件 ' + fileObj.name + '的状态')
       // 从 files 找到对应的 file
       const file = this.files.find(
         file => file.uniqueIdentifier === fileObj.uniqueIdentifier
@@ -467,7 +513,7 @@ export default {
               retries,
               tested,
               progress: chunkObj.progress(),
-              status: chunkObj.status()
+              status: status === 'secondTransmission' ? 'success' : chunkObj.status()
             })
           })
           this.$set(file, 'chunks', arr)
@@ -555,15 +601,21 @@ export default {
       var seconds = temp % 60
       return seconds + ' 秒'
     },
+    // 文件处于最终状态，包括但不限于上传成功、上传失败、秒传
+    isFileDone(file) {
+      const { status } = file
+      return status === 'success' || status === 'error' || status === 'secondTransmission'
+    },
     startAll() {
-      this.flow.resume()
       this.originFileObjs.forEach(fileObj => {
         const file = this.files.find(
           file => file.uniqueIdentifier === fileObj.uniqueIdentifier
         )
         if (file) {
-          const { status, paused } = file
-          if (status !== 'success' && status !== 'error' && paused === true) {
+          const { paused } = file
+          const isFileDone = this.isFileDone(file)
+          if (!isFileDone && paused) {
+            fileObj.resume()
             file.paused = false
             this.updateFileAndChunkInfo(fileObj)
           }
@@ -571,14 +623,15 @@ export default {
       })
     },
     pauseAll() {
-      this.flow.pause()
       this.originFileObjs.forEach(fileObj => {
         const file = this.files.find(
           file => file.uniqueIdentifier === fileObj.uniqueIdentifier
         )
         if (file) {
-          const { status, paused } = file
-          if (status !== 'success' && status !== 'error' && paused === false) {
+          const { paused } = file
+          const isFileDone = this.isFileDone(file)
+          if (!isFileDone && !paused) {
+            fileObj.pause()
             file.paused = true
             this.updateFileAndChunkInfo(fileObj)
           }
